@@ -1,0 +1,28 @@
+{
+    "appTitle": "Visitor Management System",
+    "scanID": "Scan ID Card (DESKO)",
+    "scanSuccess": "ID Scanned successfully!",
+    "scanError": "Failed to scan ID.",
+    "submitting": "Submitting...",
+    "submit": "Submit Visitor Record",
+    "submitSuccess": "Visitor created and synchronized with Lenel!",
+    "submitError": "Error submitting visitor.",
+    "form": {
+      "mandatoryFields": "Mandatory Fields",
+      "optionalFields": "Optional Fields",
+      "name": "Full Name",
+      "guestOf": "Guest Of",
+      "nationalId": "National ID",
+      "officeBranch": "Office Branch",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "address": "Address",
+      "nationality": "Nationality",
+      "carPlate": "Car Plate Number",
+      "carModel": "Car Model",
+      "purpose": "Purpose of Visit",
+      "passportId": "Passport ID",
+      "comments": "Comments",
+      "accessLevel": "Access Level (Receptionist)"
+    }
+  }

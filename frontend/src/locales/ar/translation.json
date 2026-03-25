@@ -1,0 +1,28 @@
+{
+    "appTitle": "نظام إدارة الزوار",
+    "scanID": "مسح بطاقة الهوية (DESKO)",
+    "scanSuccess": "تم مسح الهوية بنجاح!",
+    "scanError": "فشل مسح الهوية.",
+    "submitting": "جاري الإرسال...",
+    "submit": "إرسال سجل الزائر",
+    "submitSuccess": "تم إنشاء الزائر ومزامنته مع نظام Lenel!",
+    "submitError": "خطأ في إرسال سجل الزائر.",
+    "form": {
+      "mandatoryFields": "الحقول الإلزامية",
+      "optionalFields": "الحقول الاختيارية",
+      "name": "الاسم الكامل",
+      "guestOf": "ضيف عند",
+      "nationalId": "الرقم القومي (الهوية)",
+      "officeBranch": "فرع المكتب",
+      "startTime": "وقت البدء",
+      "endTime": "وقت النهاية",
+      "address": "العنوان",
+      "nationality": "الجنسية",
+      "carPlate": "رقم لوحة السيارة",
+      "carModel": "نوع السيارة",
+      "purpose": "غرض الزيارة",
+      "passportId": "رقم جواز السفر",
+      "comments": "تعليقات",
+      "accessLevel": "مستوى الدخول (للاستقبال)"
+    }
+  }
