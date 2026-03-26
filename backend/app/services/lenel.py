@@ -53,6 +53,34 @@ class LenelDataConduITService:
             logger.error(f"Error creating Cardholder in Lenel: {e}")
             raise
 
+    def fetch_all_access_levels(self) -> list:
+        """
+        Fetches all available access levels from Lenel DataConduIT.
+        """
+        if not self.is_windows or not self.wmi_client:
+            # Mock Data
+            return [
+                {"lenel_id": "LNL_1001", "name": "General Employee", "description": "All non-restricted areas"},
+                {"lenel_id": "LNL_1002", "name": "Executive VIP", "description": "Executive suites access"},
+                {"lenel_id": "LNL_1003", "name": "IT Server Room", "description": "IT Staff Only"},
+                {"lenel_id": "LNL_1004", "name": "Contractor", "description": "Temporary restricted access"},
+            ]
+
+        try:
+            # Use WMI to fetch Lnl_AccessLevel instances
+            access_levels = self.wmi_client.Lnl_AccessLevel()
+            results = []
+            for al in access_levels:
+                results.append({
+                    "lenel_id": str(al.ID),
+                    "name": al.Name,
+                    "description": getattr(al, "Description", "")
+                })
+            return results
+        except Exception as e:
+            logger.error(f"Error fetching access levels from Lenel: {e}")
+            raise
+
     def assign_access_level(self, cardholder_id: str, access_level_id: str) -> bool:
         """
         Assigns an access level badge to a cardholder.

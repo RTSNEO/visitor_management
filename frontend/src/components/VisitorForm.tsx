@@ -36,7 +36,7 @@ export default function VisitorForm() {
 
   useEffect(() => {
     // Fetch Access Levels from Lenel mock
-    axios.get('http://localhost:8000/api/access-levels')
+    axios.get(`${import.meta.env.VITE_API_URL}/api/access-levels`)
       .then(res => setAccessLevels(res.data))
       .catch(err => console.error("Could not load access levels:", err));
   }, []);
@@ -56,7 +56,7 @@ export default function VisitorForm() {
     formDataObj.append("file", file);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/scan', formDataObj, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/scan`, formDataObj, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -94,7 +94,7 @@ export default function VisitorForm() {
     if (payload.end_time) payload.end_time = new Date(payload.end_time).toISOString();
 
     try {
-      await axios.post('http://localhost:8000/api/visitors', payload);
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/visitors`, payload);
       setMessage({ type: 'success', text: t('submitSuccess') });
       // Clear form
       setFormData({
