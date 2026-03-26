@@ -13,6 +13,7 @@ export default function Admin() {
   // User Management state
   const [users, setUsers] = useState<any[]>([]);
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'operator' });
+  const [editingUser, setEditingUser] = useState<any>(null);
 
   // Manual Access Level state
   const [manualLevel, setManualLevel] = useState({ lenel_id: '', name: '', description: '' });
@@ -61,11 +62,38 @@ export default function Admin() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, newUser);
+      if (editingUser) {
+        const payload: any = { username: newUser.username, role: newUser.role };
+        if (newUser.password) payload.password = newUser.password;
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editingUser.id}`, payload);
+        setEditingUser(null);
+      } else {
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, newUser);
+      }
       setNewUser({ username: '', password: '', role: 'operator' });
       fetchData();
-    } catch (err) {
-      alert('Failed to create user (username might exist)');
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to save user');
+    }
+  };
+
+  const startEditUser = (u: any) => {
+    setEditingUser(u);
+    setNewUser({ username: u.username, password: '', role: u.role });
+  };
+
+  const cancelEdit = () => {
+    setEditingUser(null);
+    setNewUser({ username: '', password: '', role: 'operator' });
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${userId}`);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete user');
     }
   };
 
@@ -149,7 +177,7 @@ export default function Admin() {
         <section className="bg-white p-6 rounded shadow">
           <h2 className="text-xl font-bold mb-4">User Management</h2>
           <form onSubmit={handleCreateUser} className="mb-6 bg-gray-50 p-4 rounded border">
-            <h3 className="font-semibold mb-3">Create New User</h3>
+            <h3 className="font-semibold mb-3">{editingUser ? 'Edit User' : 'Create New User'}</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <input
                 placeholder="Username" required
@@ -157,7 +185,7 @@ export default function Admin() {
                 className="border p-2 rounded"
               />
               <input
-                type="password" placeholder="Password" required
+                type="password" placeholder={editingUser ? "New Password (leave blank to keep)" : "Password"} required={!editingUser}
                 value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})}
                 className="border p-2 rounded"
               />
@@ -169,7 +197,16 @@ export default function Admin() {
                 <option value="admin">Admin</option>
               </select>
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Add User</button>
+            <div className="flex gap-2">
+              <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                {editingUser ? 'Save Changes' : 'Add User'}
+              </button>
+              {editingUser && (
+                <button type="button" onClick={cancelEdit} className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600">
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
 
           <h3 className="font-bold mb-2">Existing Users</h3>
@@ -178,6 +215,7 @@ export default function Admin() {
               <tr className="bg-gray-100 border-b">
                 <th className="p-2">Username</th>
                 <th className="p-2">Role</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -185,6 +223,12 @@ export default function Admin() {
                 <tr key={u.id} className="border-b">
                   <td className="p-2">{u.username}</td>
                   <td className="p-2 capitalize">{u.role}</td>
+                  <td className="p-2 flex gap-2">
+                    <button onClick={() => startEditUser(u)} className="text-blue-600 hover:underline text-sm">Edit</button>
+                    {u.username !== 'admin' && (
+                      <button onClick={() => handleDeleteUser(u.id)} className="text-red-600 hover:underline text-sm">Delete</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
