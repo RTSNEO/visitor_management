@@ -14,6 +14,7 @@
       "guestOf": "Guest Of",
       "nationalId": "National ID",
       "officeBranch": "Office Branch",
+      "selectOfficeBranch": "--- Select Office Branch ---",
       "startTime": "Start Time",
       "endTime": "End Time",
       "address": "Address",
