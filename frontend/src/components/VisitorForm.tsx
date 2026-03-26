@@ -148,7 +148,38 @@ export default function VisitorForm() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t('form.officeBranch')} *</label>
-              <input required type="text" name="office_branch" value={formData.office_branch} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+              <select required name="office_branch" value={formData.office_branch} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                <option value="" disabled>{t('form.selectOfficeBranch')}</option>
+                <option value="النزهة">النزهة</option>
+                <option value="الأكاديمية">الأكاديمية</option>
+                <option value="الشرقيه">الشرقيه</option>
+                <option value="كفر الشيخ">كفر الشيخ</option>
+                <option value="دمياط">دمياط</option>
+                <option value="الدقهلية">الدقهلية</option>
+                <option value="الغربية">الغربية</option>
+                <option value="المنوفية">المنوفية</option>
+                <option value="القليوبية">القليوبية</option>
+                <option value="الإسكندرية">الإسكندرية</option>
+                <option value="مطروح">مطروح</option>
+                <option value="البحيرة">البحيرة</option>
+                <option value="الإسماعيلية">الإسماعيلية</option>
+                <option value="السويس">السويس</option>
+                <option value="بورسعيد">بورسعيد</option>
+                <option value="شمال سيناء">شمال سيناء</option>
+                <option value="جنوب سيناء">جنوب سيناء</option>
+                <option value="بني سويف">بني سويف</option>
+                <option value="المنيا">المنيا</option>
+                <option value="أسيوط">أسيوط</option>
+                <option value="الوادي الجديد">الوادي الجديد</option>
+                <option value="الفيوم">الفيوم</option>
+                <option value="الأقصر">الأقصر</option>
+                <option value="أسوان">أسوان</option>
+                <option value="سوهاج">سوهاج</option>
+                <option value="قنا">قنا</option>
+                <option value="البحر الأحمر">البحر الأحمر</option>
+                <option value="التنمية المحلية">التنمية المحلية</option>
+                <option value="أخري">أخري</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t('form.startTime')} *</label>
