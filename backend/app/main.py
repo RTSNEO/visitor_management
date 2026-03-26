@@ -87,6 +87,41 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
 def list_users(db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
     return db.query(models.User).all()
 
+@app.put("/api/users/{user_id}", response_model=schemas.User)
+def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_update.username:
+        # Check if new username is taken by another user
+        existing = db.query(models.User).filter(models.User.username == user_update.username, models.User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        db_user.username = user_update.username
+
+    if user_update.role:
+        db_user.role = user_update.role
+
+    if user_update.password:
+        db_user.hashed_password = get_password_hash(user_update.password)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if db_user.username == "admin":
+        raise HTTPException(status_code=400, detail="Cannot delete default admin user")
+
+    db.delete(db_user)
+    db.commit()
+    return {"message": "User deleted successfully"}
+
 @app.get("/api/access-levels", response_model=List[schemas.AccessLevel])
 def get_access_levels(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.AccessLevel).all()

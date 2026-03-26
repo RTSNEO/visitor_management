@@ -18,6 +18,9 @@ export default function Operator() {
       <header className="max-w-4xl mx-auto flex justify-between items-center mb-6">
         <div className="flex gap-4 items-center">
           <span className="font-bold text-gray-600">Logged in as: {user.username} ({user.role})</span>
+          {user.role === 'admin' && (
+            <button onClick={() => navigate('/admin')} className="text-indigo-600 font-bold hover:underline text-sm">Admin Setup</button>
+          )}
           <button onClick={() => navigate('/history')} className="text-blue-600 hover:underline text-sm">View History</button>
           <button onClick={logout} className="text-red-600 hover:underline text-sm">Logout</button>
         </div>

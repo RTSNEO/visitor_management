@@ -34,11 +34,7 @@ export default function Login() {
 
       login(access_token, userRes.data);
 
-      if (userRes.data.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/operator');
-      }
+      navigate('/operator');
 
     } catch (err) {
       setError('Invalid username or password');
