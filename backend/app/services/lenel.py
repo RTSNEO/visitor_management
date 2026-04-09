@@ -41,6 +41,10 @@ class LenelDataConduITService:
             new_cardholder.FirstName = visitor_data.get("name", "").split(" ")[0]
             new_cardholder.LastName = " ".join(visitor_data.get("name", "").split(" ")[1:])
             new_cardholder.SSN = visitor_data.get("national_id", "")
+            if visitor_data.get("card_number"):
+                # Example: Assign card number directly to a field or badge property
+                # This depends on Lenel's exact WMI API, but setting it as a property is standard.
+                pass
             # Add other mappings as per Lenel documentation
 
             # Save the cardholder

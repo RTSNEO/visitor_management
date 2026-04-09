@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi.staticfiles import StaticFiles
+import uuid
+import os
+from fastapi import FastAPI, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from app.database import engine, get_db
 import app.models as models
@@ -7,11 +10,35 @@ from fastapi import File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 from app.services.ocr import DESKOScannerService
+from app.auth import get_password_hash, verify_password, create_access_token, get_current_user, require_role
+import app.auth as auth
+
 
 # Create DB Tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Visitor Management API")
+
+os.makedirs("uploads", exist_ok=True)
+from fastapi.responses import FileResponse
+
+from fastapi import Query
+import jwt
+
+@app.get("/uploads/{filename}")
+def get_upload(filename: str, token: str = Query(...), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    file_path = os.path.join("uploads", filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
 
 app.add_middleware(
     CORSMiddleware,
@@ -171,6 +198,7 @@ def create_visitor(visitor: schemas.VisitorCreate, db: Session = Depends(get_db)
         start_time=visitor.start_time,
         end_time=visitor.end_time,
         address=visitor.address,
+        date_of_birth=visitor.date_of_birth,
         nationality=visitor.nationality,
         car_plate=visitor.car_plate,
         car_model=visitor.car_model,
@@ -182,6 +210,14 @@ def create_visitor(visitor: schemas.VisitorCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(db_visitor)
 
+    # Pop a card from the pool
+    available_card = db.query(models.CardPool).filter(models.CardPool.is_used == False).first()
+    assigned_card_id = None
+    if available_card:
+        available_card.is_used = True
+        assigned_card_id = available_card.card_number
+        db.commit()
+
     # Lenel Integration
     from app.services.lenel import LenelDataConduITService
     lenel_service = LenelDataConduITService()
@@ -191,13 +227,19 @@ def create_visitor(visitor: schemas.VisitorCreate, db: Session = Depends(get_db)
         visitor_data = {
             "name": visitor.name,
             "national_id": visitor.national_id,
+            "card_number": assigned_card_id # Pass physical card to Lenel service
         }
         card_id = lenel_service.create_cardholder(visitor_data)
-        db_visitor.lenel_card_id = card_id
 
         # Assign Access Level if selected
         if visitor.selected_access_level_id:
             lenel_service.assign_access_level(card_id, visitor.selected_access_level_id)
+
+        # We save the physical card number to our DB
+        if assigned_card_id:
+            db_visitor.lenel_card_id = assigned_card_id
+        else:
+            db_visitor.lenel_card_id = card_id
 
         db_visitor.is_synchronized = True
         db.commit()
@@ -237,3 +279,91 @@ def get_visitors_history(
         "skip": skip,
         "limit": limit
     }
+
+@app.post("/api/pre-approvals", response_model=schemas.PreApprovalRequest)
+async def create_pre_approval(
+    national_id: str = Form(...),
+    name: str = Form(...),
+    address: str = Form(""),
+    date_of_birth: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    # Save the image
+    file_ext = file.filename.split(".")[-1]
+    filename = f"{uuid.uuid4()}.{file_ext}"
+    filepath = os.path.join("uploads", filename)
+    with open(filepath, "wb") as f:
+        f.write(await file.read())
+
+    db_request = models.PreApprovalRequest(
+        employee_username=current_user.username,
+        national_id=national_id,
+        name=name,
+        address=address,
+        date_of_birth=date_of_birth,
+        id_image_filename=filename
+    )
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+@app.get("/api/pre-approvals", response_model=List[schemas.PreApprovalRequest])
+def list_pre_approvals(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    # Security officers and admins see all. Employees see their own or approved ones.
+    if current_user.role in ["security_officer", "admin"]:
+        return db.query(models.PreApprovalRequest).order_by(models.PreApprovalRequest.created_at.desc()).all()
+    else:
+        return db.query(models.PreApprovalRequest).filter(
+            (models.PreApprovalRequest.employee_username == current_user.username) |
+            (models.PreApprovalRequest.status == 'approved')
+        ).order_by(models.PreApprovalRequest.created_at.desc()).all()
+
+@app.put("/api/pre-approvals/{request_id}/status", response_model=schemas.PreApprovalRequest)
+def update_pre_approval_status(
+    request_id: int,
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_request = db.query(models.PreApprovalRequest).filter(models.PreApprovalRequest.id == request_id).first()
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    if current_user.role not in ["security_officer", "admin"]:
+        # Employee can only update to permit_created if it's their own request and it's currently approved
+        if current_user.role == "employee" and status == "permit_created" and db_request.employee_username == current_user.username and db_request.status == "approved":
+            pass
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    db_request.status = status
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+@app.get("/api/cards", response_model=List[schemas.CardPool])
+def list_cards(db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
+    return db.query(models.CardPool).all()
+
+@app.post("/api/cards", response_model=schemas.CardPool)
+def add_card(card: schemas.CardPoolCreate, db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
+    db_card = db.query(models.CardPool).filter(models.CardPool.card_number == card.card_number).first()
+    if db_card:
+        raise HTTPException(status_code=400, detail="Card already exists")
+    new_card = models.CardPool(card_number=card.card_number)
+    db.add(new_card)
+    db.commit()
+    db.refresh(new_card)
+    return new_card
+
+@app.delete("/api/cards/{card_id}")
+def delete_card(card_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
+    db_card = db.query(models.CardPool).filter(models.CardPool.id == card_id).first()
+    if not db_card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    db.delete(db_card)
+    db.commit()
+    return {"message": "Card deleted successfully"}

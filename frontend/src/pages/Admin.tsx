@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import CardPoolManager from '../components/CardPoolManager';
 
 export default function Admin() {
   const { user, logout } = useAuth();
@@ -194,6 +195,8 @@ export default function Admin() {
                 className="border p-2 rounded col-span-2"
               >
                 <option value="operator">Operator (Front Desk)</option>
+                <option value="employee">Employee</option>
+                <option value="security_officer">Security Officer</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
@@ -234,6 +237,10 @@ export default function Admin() {
             </tbody>
           </table>
         </section>
+      </div>
+
+      <div className="mt-8">
+        <CardPoolManager />
       </div>
     </div>
   );

@@ -39,6 +39,7 @@ class VisitorBase(BaseModel):
     end_time: datetime
 
     address: Optional[str] = None
+    date_of_birth: Optional[str] = None
     nationality: Optional[str] = None
     car_plate: Optional[str] = None
     car_model: Optional[str] = None
@@ -68,6 +69,39 @@ class AccessLevelBase(BaseModel):
 
 class AccessLevel(AccessLevelBase):
     id: int
+
+    class Config:
+        from_attributes = True
+
+class PreApprovalRequestBase(BaseModel):
+    national_id: str
+    name: str
+    address: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    id_image_filename: Optional[str] = None
+
+class PreApprovalRequestCreate(PreApprovalRequestBase):
+    pass
+
+class PreApprovalRequest(PreApprovalRequestBase):
+    id: int
+    employee_username: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CardPoolBase(BaseModel):
+    card_number: str
+
+class CardPoolCreate(CardPoolBase):
+    pass
+
+class CardPool(CardPoolBase):
+    id: int
+    is_used: bool
 
     class Config:
         from_attributes = True
