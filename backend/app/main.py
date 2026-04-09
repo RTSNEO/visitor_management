@@ -8,7 +8,7 @@ import app.models as models
 import app.schemas as schemas
 from fastapi import File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Dict
+from typing import List, Dict, Optional
 from app.services.ocr import DESKOScannerService
 from app.auth import get_password_hash, verify_password, create_access_token, get_current_user, require_role
 import app.auth as auth
@@ -96,7 +96,11 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
 
 # Admin Only - Create Users
 @app.post("/api/users", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(auth.get_current_user_optional)):
+    # Allow creating first user without authentication
+    if current_user is None and db.query(models.User).count() > 0:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")

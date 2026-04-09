@@ -60,3 +60,17 @@ def require_role(role: str):
             )
         return current_user
     return role_checker
+
+def get_current_user_optional(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get current user if authenticated, otherwise return None"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        user = db.query(User).filter(User.username == username).first()
+        if user is None:
+            return None
+        return user
+    except:
+        return None
