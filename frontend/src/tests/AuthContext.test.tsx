@@ -25,6 +25,7 @@ describe('AuthContext', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
+    ;(axios as any).defaults = { headers: { common: {} } }
   })
 
   afterEach(() => {
@@ -94,7 +95,7 @@ describe('AuthContext', () => {
     
     ;(axios.get as any).mockResolvedValueOnce({ data: mockUser })
 
-    const { rerender } = render(
+    render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
@@ -110,11 +111,10 @@ describe('AuthContext', () => {
   })
 
   it('should set axios authorization header when token is available', async () => {
-    const mockUser = { username: 'testuser', role: 'operator' }
     const token = 'test-token-123'
     localStorage.setItem('token', token)
     
-    ;(axios.get as any).mockResolvedValueOnce({ data: mockUser })
+    ;(axios.get as any).mockResolvedValueOnce({ data: { username: 'testuser', role: 'operator' } })
 
     render(
       <AuthProvider>
@@ -129,7 +129,6 @@ describe('AuthContext', () => {
 
   it('should remove authorization header on logout', async () => {
     localStorage.setItem('token', 'test-token')
-    const mockUser = { username: 'testuser', role: 'operator' }
     
     ;(axios.get as any).mockRejectedValueOnce(new Error('Unauthorized'))
 

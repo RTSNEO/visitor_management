@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config/api';
 
 interface User {
   username: string;
@@ -24,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      axios.get(`${import.meta.env.VITE_API_URL}/api/auth/me`)
+      axios.get(`${API_URL}/api/auth/me`)
         .then(res => {
           setUser(res.data);
         })

@@ -17,18 +17,31 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-global.localStorage = localStorageMock as any
+const localStorageMock = (() => {
+  let store: Record<string, string> = {}
+
+  return {
+    getItem: vi.fn((key: string) => {
+      return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = String(value)
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key]
+    }),
+    clear: vi.fn(() => {
+      store = {}
+    }),
+  }
+})()
+
+window.localStorage = localStorageMock as any
 
 // Mock import.meta.env
 Object.defineProperty(import.meta, 'env', {
   value: {
-    VITE_API_URL: 'http://localhost:8000',
+    VITE_API_URL: 'http://127.0.0.1:8000',
   },
   writable: true,
 })

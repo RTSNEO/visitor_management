@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
+import { API_URL } from '../config/api';
 
 import LanguageToggle from '../components/LanguageToggle';
 
@@ -11,29 +12,30 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [hasUsers, setHasUsers] = useState(true);
+  const [hasUsers, setHasUsers] = useState<boolean | null>(null);
+  const [isCheckingUsers, setIsCheckingUsers] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if there are any existing users
     checkExistingUsers();
   }, []);
 
   const checkExistingUsers = async () => {
+    setIsCheckingUsers(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`);
-      if (response.status === 401) {
-        // No authentication means no users exist
-        setHasUsers(false);
-        setIsRegisterMode(true);
-      } else if (response.ok) {
+      const response = await fetch(`${API_URL}/api/setup/has-users`);
+      if (response.ok) {
+        const data = await response.json();
+        setHasUsers(data.hasUsers);
+        setIsRegisterMode(!data.hasUsers);
+      } else {
         setHasUsers(true);
       }
     } catch (err) {
-      // If request fails, assume no users exist
-      setHasUsers(false);
-      setIsRegisterMode(true);
+      setHasUsers(true);
+    } finally {
+      setIsCheckingUsers(false);
     }
   };
 
@@ -53,7 +55,7 @@ export default function Login() {
       }
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
+        const response = await fetch(`${API_URL}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -68,10 +70,10 @@ export default function Login() {
           throw new Error(errorData.detail || 'Registration failed');
         }
 
-        const newUser = await response.json();
+        await response.json();
 
         // After successful registration, automatically log in
-        const loginResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/token`, {
+        const loginResponse = await fetch(`${API_URL}/api/auth/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
@@ -83,7 +85,7 @@ export default function Login() {
         const token = data.access_token;
 
         // Get user info
-        const userRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+        const userRes = await fetch(`${API_URL}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -96,7 +98,7 @@ export default function Login() {
     } else {
       // Login mode
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/token`, {
+        const response = await fetch(`${API_URL}/api/auth/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
@@ -108,7 +110,7 @@ export default function Login() {
         const token = data.access_token;
 
         // Get user info
-        const userRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+        const userRes = await fetch(`${API_URL}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -160,6 +162,7 @@ export default function Login() {
                 <input
                   type="text"
                   required
+                  autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -175,6 +178,7 @@ export default function Login() {
                 <input
                   type="password"
                   required
+                  autoComplete={isRegisterMode ? "new-password" : "current-password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -191,6 +195,7 @@ export default function Login() {
                   <input
                     type="password"
                     required
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -209,7 +214,7 @@ export default function Login() {
             </div>
           </form>
 
-          {hasUsers && (
+          {hasUsers === true && !isCheckingUsers && (
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -217,13 +222,14 @@ export default function Login() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white text-gray-500">
-                    {isRegisterMode ? 'Already have an account?' : 'Need to create an account?'}
+                    {isRegisterMode ? 'Already have an account?' : 'Create a new account'}
                   </span>
                 </div>
               </div>
 
               <div className="mt-6">
                 <button
+                  type="button"
                   onClick={() => {
                     setIsRegisterMode(!isRegisterMode);
                     setError('');

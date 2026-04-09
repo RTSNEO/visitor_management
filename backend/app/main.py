@@ -97,9 +97,13 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
 # Admin Only - Create Users
 @app.post("/api/users", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(auth.get_current_user_optional)):
-    # Allow creating first user without authentication
-    if current_user is None and db.query(models.User).count() > 0:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    # Allow creating the first user without authentication
+    if current_user is None:
+        if db.query(models.User).count() > 0:
+            raise HTTPException(status_code=401, detail="Authentication required")
+    else:
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not enough permissions")
 
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
@@ -113,6 +117,11 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
     db.commit()
     db.refresh(new_user)
     return new_user
+
+@app.get("/api/setup/has-users")
+def has_users(db: Session = Depends(get_db)):
+    user_count = db.query(models.User).count()
+    return {"hasUsers": user_count > 0}
 
 @app.get("/api/users", response_model=List[schemas.User])
 def list_users(db: Session = Depends(get_db), current_user: models.User = Depends(require_role("admin"))):
@@ -371,3 +380,9 @@ def delete_card(card_id: int, db: Session = Depends(get_db), current_user: model
     db.delete(db_card)
     db.commit()
     return {"message": "Card deleted successfully"}
+
+# Serve frontend static files from the built dist folder
+import os.path
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend", "dist")
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
