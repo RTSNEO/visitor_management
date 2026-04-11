@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +23,7 @@ export default function History() {
     setLoading(true);
     try {
       const skip = page * limit;
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/visitors/history?skip=${skip}&limit=${limit}&search=${search}`, {
+      const res = await axios.get(`${API_URL}/api/visitors/history?skip=${skip}&limit=${limit}&search=${search}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setHistory(res.data.items);

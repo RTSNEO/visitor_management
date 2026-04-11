@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -27,9 +29,9 @@ export default function Admin() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [lenelRes, localRes, userRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/api/admin/lenel-access-levels`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/access-levels`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/users`, { headers })
+        axios.get(`${API_URL}/api/admin/lenel-access-levels`, { headers }),
+        axios.get(`${API_URL}/api/access-levels`, { headers }),
+        axios.get(`${API_URL}/api/users`, { headers })
       ]);
       setLenelLevels(lenelRes.data);
       setLocalLevels(localRes.data);
@@ -43,7 +45,7 @@ export default function Admin() {
 
   const importLevel = async (level: any) => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/access-levels`, level, {
+      await axios.post(`${API_URL}/api/admin/access-levels`, level, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData(); // Refresh lists
@@ -55,7 +57,7 @@ export default function Admin() {
   const handleManualLevelSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/access-levels`, manualLevel, {
+      await axios.post(`${API_URL}/api/admin/access-levels`, manualLevel, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setManualLevel({ lenel_id: '', name: '', description: '' });
@@ -72,10 +74,10 @@ export default function Admin() {
       if (editingUser) {
         const payload: any = { username: newUser.username, role: newUser.role };
         if (newUser.password) payload.password = newUser.password;
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editingUser.id}`, payload, { headers });
+        await axios.put(`${API_URL}/api/users/${editingUser.id}`, payload, { headers });
         setEditingUser(null);
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, newUser, { headers });
+        await axios.post(`${API_URL}/api/users`, newUser, { headers });
       }
       setNewUser({ username: '', password: '', role: 'operator' });
       fetchData();
@@ -97,7 +99,7 @@ export default function Admin() {
   const handleDeleteUser = async (userId: number) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${userId}`, {
+      await axios.delete(`${API_URL}/api/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();

@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -38,7 +40,7 @@ export default function VisitorForm() {
 
   useEffect(() => {
     // Fetch Access Levels from Lenel mock
-    axios.get(`${import.meta.env.VITE_API_URL}/api/access-levels`, {
+    axios.get(`${API_URL}/api/access-levels`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => setAccessLevels(res.data))
@@ -60,7 +62,7 @@ export default function VisitorForm() {
     formDataObj.append("file", file);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/scan`, formDataObj, {
+      const response = await axios.post(`${API_URL}/api/scan`, formDataObj, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
@@ -101,7 +103,7 @@ export default function VisitorForm() {
     if (payload.end_time) payload.end_time = new Date(payload.end_time).toISOString();
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/visitors`, payload, {
+      await axios.post(`${API_URL}/api/visitors`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage({ type: 'success', text: t('submitSuccess') });
