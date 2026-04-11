@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { Upload } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface AccessLevel {
   id: number;
@@ -12,6 +13,7 @@ interface AccessLevel {
 
 export default function VisitorForm() {
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [accessLevels, setAccessLevels] = useState<AccessLevel[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,10 +38,12 @@ export default function VisitorForm() {
 
   useEffect(() => {
     // Fetch Access Levels from Lenel mock
-    axios.get(`${import.meta.env.VITE_API_URL}/api/access-levels`)
+    axios.get(`${import.meta.env.VITE_API_URL}/api/access-levels`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(res => setAccessLevels(res.data))
       .catch(err => console.error("Could not load access levels:", err));
-  }, []);
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -57,7 +61,10 @@ export default function VisitorForm() {
 
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/scan`, formDataObj, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
       });
 
       if (response.data.success) {
@@ -94,7 +101,9 @@ export default function VisitorForm() {
     if (payload.end_time) payload.end_time = new Date(payload.end_time).toISOString();
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/visitors`, payload);
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/visitors`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setMessage({ type: 'success', text: t('submitSuccess') });
       // Clear form
       setFormData({

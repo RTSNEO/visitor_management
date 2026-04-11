@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function History() {
+  const { token } = useAuth();
   const [history, setHistory] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
@@ -13,13 +15,15 @@ export default function History() {
 
   useEffect(() => {
     fetchHistory();
-  }, [page, search]);
+  }, [page, search, token]);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
       const skip = page * limit;
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/visitors/history?skip=${skip}&limit=${limit}&search=${search}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/visitors/history?skip=${skip}&limit=${limit}&search=${search}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setHistory(res.data.items);
       setTotal(res.data.total);
     } catch (err) {

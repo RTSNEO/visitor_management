@@ -20,7 +20,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Visitor Management API")
 
 os.makedirs("uploads", exist_ok=True)
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from fastapi import Query
 import jwt
@@ -381,8 +381,40 @@ def delete_card(card_id: int, db: Session = Depends(get_db), current_user: model
     db.commit()
     return {"message": "Card deleted successfully"}
 
-# Serve frontend static files from the built dist folder
+# Serve index.html with strict no-cache headers for dynamic frontend updates
+@app.get("/")
+async def serve_index():
+    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend", "dist")
+    index_path = os.path.join(frontend_dist, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, 'r') as f:
+            content = f.read()
+        return Response(content=content, media_type="text/html", headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        })
+    raise HTTPException(status_code=404, detail="Frontend not found")
+
+# Serve other frontend static files from the built dist folder
 import os.path
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend", "dist")
 if os.path.exists(frontend_dist):
-    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="static")
+    # Fallback for other static files and SPA routing
+    @app.get("/{path_name:path}")
+    async def serve_spa(path_name: str):
+        file_path = os.path.join(frontend_dist, path_name)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        # SPA fallback - serve index.html for all unmatched routes
+        index_path = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_path):
+            with open(index_path, 'r') as f:
+                content = f.read()
+            return Response(content=content, media_type="text/html", headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            })
+        raise HTTPException(status_code=404, detail="Not found")
