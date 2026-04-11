@@ -40,8 +40,6 @@ window.localStorage = localStorageMock as any
 
 // Mock import.meta.env
 Object.defineProperty(import.meta, 'env', {
-  value: {
-    VITE_API_URL: 'http://127.0.0.1:8000',
-  },
+  value: {},
   writable: true,
 })

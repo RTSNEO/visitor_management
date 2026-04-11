@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2, Plus } from 'lucide-react';
@@ -17,7 +19,7 @@ export default function CardPoolManager() {
 
   const fetchCards = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/cards`, {
+      const response = await axios.get(`${API_URL}/api/cards`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCards(response.data);
@@ -35,7 +37,7 @@ export default function CardPoolManager() {
     if (!newCard.trim()) return;
     setError('');
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/cards`, { card_number: newCard }, {
+      await axios.post(`${API_URL}/api/cards`, { card_number: newCard }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNewCard('');
@@ -47,7 +49,7 @@ export default function CardPoolManager() {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/cards/${id}`, {
+      await axios.delete(`${API_URL}/api/cards/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchCards();

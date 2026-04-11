@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +16,7 @@ export default function SecurityOfficer() {
 
   const fetchRequests = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/pre-approvals`, {
+      const res = await axios.get(`${API_URL}/api/pre-approvals`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Filter only pending requests for the main list
@@ -33,7 +35,7 @@ export default function SecurityOfficer() {
       const formData = new FormData();
       formData.append('status', status);
 
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/pre-approvals/${id}/status`, formData, {
+      await axios.put(`${API_URL}/api/pre-approvals/${id}/status`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -137,7 +139,7 @@ export default function SecurityOfficer() {
                     {selectedRequest.id_image_filename ? (
                       <div className="border rounded bg-gray-50 p-2 h-64 flex items-center justify-center overflow-hidden">
                         <img
-                          src={`${import.meta.env.VITE_API_URL}/uploads/${selectedRequest.id_image_filename}?token=${token}`}
+                          src={`${API_URL}/uploads/${selectedRequest.id_image_filename}?token=${token}`}
                           alt="ID Document"
                           className="max-w-full max-h-full object-contain"
                         />

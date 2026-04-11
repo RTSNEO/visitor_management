@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +40,7 @@ export default function Employee() {
 
   const fetchRequests = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/pre-approvals`, {
+      const res = await axios.get(`${API_URL}/api/pre-approvals`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRequests(res.data);
@@ -49,7 +51,7 @@ export default function Employee() {
 
   const fetchAccessLevels = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/access-levels`, {
+      const res = await axios.get(`${API_URL}/api/access-levels`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAccessLevels(res.data);
@@ -70,7 +72,7 @@ export default function Employee() {
     formData.append('file', selectedFile);
 
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/scan`, formData, {
+      const res = await axios.post(`${API_URL}/api/scan`, formData, {
         headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -100,7 +102,7 @@ export default function Employee() {
     formData.append('date_of_birth', ocrData.date_of_birth || '');
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/pre-approvals`, formData, {
+      await axios.post(`${API_URL}/api/pre-approvals`, formData, {
         headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
       });
       setMessage({ type: 'success', text: 'Pre-Approval Request submitted successfully!' });
@@ -132,14 +134,14 @@ export default function Employee() {
         selected_access_level_id: permitData.selected_access_level_id
       };
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/visitors`, payload, {
+      await axios.post(`${API_URL}/api/visitors`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       // Update the pre-approval status to permit_created
       const statusData = new FormData();
       statusData.append('status', 'permit_created');
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/pre-approvals/${creatingPermitFor.id}/status`, statusData, {
+      await axios.put(`${API_URL}/api/pre-approvals/${creatingPermitFor.id}/status`, statusData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchRequests();
